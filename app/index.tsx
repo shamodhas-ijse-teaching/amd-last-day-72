@@ -7,20 +7,29 @@ import {
 } from "expo-camera"
 import { useEffect, useRef, useState } from "react"
 import { View, Text, TouchableOpacity, Alert, Image } from "react-native"
-import Test from "./test"
+import * as MediaLibrary from "expo-media-library"
 
 const App = () => {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
+
+  const [mediaPermission, requestMediaPermission] =
+    MediaLibrary.usePermissions()
+
   const cameraRef = useRef<CameraView>(null)
   const [facing, setFacing] = useState<CameraType>("back")
   const [data, setData] = useState("")
   const [photo, setPhoto] = useState("")
 
   useEffect(() => {
-    if (!cameraPermission?.granted) {
-      requestCameraPermission()
-    }
-  }, [cameraPermission])
+    ;(async () => {
+      if (!cameraPermission?.granted) {
+        await requestCameraPermission()
+      }
+      if (!mediaPermission?.granted) {
+        await requestMediaPermission()
+      }
+    })()
+  }, [cameraPermission, mediaPermission])
 
   const handleFlip = () => {
     setFacing(facing === "back" ? "front" : "back")
@@ -37,7 +46,14 @@ const App = () => {
     if (cameraRef.current) {
       const result = await cameraRef.current.takePictureAsync()
       setPhoto(result.uri)
+
+      const asset = await MediaLibrary.createAssetAsync(result.uri)
+      await MediaLibrary.createAlbumAsync("amd-71", asset, false)
     }
+  }
+
+  if (!cameraPermission?.granted || !mediaPermission?.granted) {
+    return <View></View>
   }
 
   return (
@@ -73,7 +89,6 @@ const App = () => {
           <Text className="text-white font-bold">Flip</Text>
         </TouchableOpacity>
       </View>
-      {/* <Test /> */}
     </View>
   )
 }
