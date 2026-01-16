@@ -6,14 +6,15 @@ import {
   BarcodeScanningResult
 } from "expo-camera"
 import { useEffect, useRef, useState } from "react"
-import { View, Text, TouchableOpacity, Alert } from "react-native"
+import { View, Text, TouchableOpacity, Alert, Image } from "react-native"
 import Test from "./test"
 
 const App = () => {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
+  const cameraRef = useRef<CameraView>(null)
   const [facing, setFacing] = useState<CameraType>("back")
   const [data, setData] = useState("")
-  const cameraRef = useRef<CameraView>(null)
+  const [photo, setPhoto] = useState("")
 
   useEffect(() => {
     if (!cameraPermission?.granted) {
@@ -35,6 +36,7 @@ const App = () => {
   const takePhoto = async () => {
     if (cameraRef.current) {
       const result = await cameraRef.current.takePictureAsync()
+      setPhoto(result.uri)
     }
   }
 
@@ -49,6 +51,16 @@ const App = () => {
         }}
         onBarcodeScanned={handleBarcodeScanned}
       />
+      {photo && (
+        <View className="absolute top-16 right-5 shadow-lg shadow-black/50">
+          <Image
+            source={{ uri: photo }}
+            className="w-24 rounded-xl border-2 border-white"
+            style={{ aspectRatio: 3 / 4 }}
+            resizeMode="cover"
+          />
+        </View>
+      )}
       <View className="absolute bottom-20 w-full flex-row items-center justify-around">
         <TouchableOpacity
           onPress={takePhoto}
